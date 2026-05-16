@@ -1,5 +1,5 @@
 # Simulating border cell migration: An active bead-spring model
-This repository contains a FORTRAN code and a sample data file containing the positional information of all the cells over time (for the WT condition). The FORTRAN code first creates an initial organization of the Drosophila egg chamber containing three different cell types: Nurse, Border, and Polar cells. Then it simulates the time evolution of the whole tissue system by numerically solving the equations S6-S10 in the manuscript: 
+This repository contains a FORTRAN code and a sample data file containing the positional information of all the cells over time (for the WT condition). The FORTRAN code first creates an initial organization of the Drosophila egg chamber containing three different cell types: Nurse, Border, and Polar cells. Then it simulates the time evolution of the whole tissue system by numerically solving the equations S6-S9 in the manuscript: 
 "**Modeling Collective Cell Migration in Heterogeneous Environments Using Drosophila Border Cells**", Soumyadipta Ray (1), Tuhin Roy (2), Sayan Acharjee (1), Gaurab Ghosh (1), Mohit Prasad (1), and Dipjyoti Das (1)(++), Cell Reports Physical Science, 2026.
 
 (1) Department of Biological Sciences, Indian Institute of Science Education and Research Kolkata, Mohanpur, Nadia, West Bengal, 741246, India.
