@@ -1,4 +1,4 @@
-	!!BCM Dynamics with noise and self propulsion (semi random arrangement of nurse cells)
+	!!BCM Dynamics with noise and self-propulsion (semi-random arrangement of nurse cells)
 
 	module radii
 	implicit none
@@ -81,6 +81,7 @@
 	double precision,parameter:: mignoise_mean_b=0.0d0, mignoise_std_b=0.004d0 !! related to migration dir. noise
 	end module parameters
 
+   !!! Main program starts here !!!
 	program main
 
 	use radii
@@ -93,7 +94,7 @@
 	Character(len=1000):: path
 
 	path = 'all_cells/std0.02/Kn170/rx0.05/test_runs_Kn170_rx0.05/With_outer_ellipse_beads/&
-		&High_kadhnn/kadhnn100_kadhne40/'
+		&High_kadhnn/kadhnn100_kadhne40/' !! This is the directory path where you wish to dump the data
 	!filepath = 'cell_to_cell/initangl0/Kn170/test_random/'
 	!open(16,file=filepath//'test2_2polarbeads15_Kb200_Kadhbp70_Kn170_rx0.1_cmx0.5_yforce_ry0.08_cmx0.5coy0.1.dat',&
          !          & status='unknown')
@@ -110,65 +111,46 @@
 
         call cpu_time(ti)
 	
-	dt=0.001d0
-	jf=1000000
+	dt=0.001d0 !! Integration time-step
+	jf=1000000 !! Total number of iterations 
 
 	call initial   
 	call initial_angle
 
-	do j1=1,jf
+	do j1=1,jf  !! Iteration loop begins here
         
 	call force(j1)
 	call interaction(j1)
-	if(j1.gt.10000) then
+	if(j1.gt.10000) then  
 	call move_noise(j1,dt)
 	else
 	call move_deterministic(dt)
 	end if
 
-	if(j1.gt.10000) then
-        if(mod(j1,2000).eq.0) then
+	if(j1.gt.10000) then  
+        if(mod(j1,2000).eq.0) then  !! Data will be stored every 2000 steps
           do l=1,mn 
             do i=1,nn        
-            	    write(16,*)j1,l,i,xn(l,i),yn(l,i),0d0,0d0	              
+            	    write(16,*)j1,l,i,xn(l,i),yn(l,i),0d0,0d0	!! Data writing for nurse cells              
             end do
           end do
           do l=1,mb 
             do i=1,nb        
-            	    write(16,*)j1,mn+l,i,xb(l,i),yb(l,i),migration_forcex(l,i),migration_forcey(l,i)	              
+            	    write(16,*)j1,mn+l,i,xb(l,i),yb(l,i),migration_forcex(l,i),migration_forcey(l,i)  !! Data writing for border cells            
             end do
           end do
           do l=1,mp 
             do i=1,np        
-            	    write(16,*)j1,mn+mb+l,i,xp(l,i),yp(l,i),0d0,0d0	              
+            	    write(16,*)j1,mn+mb+l,i,xp(l,i),yp(l,i),0d0,0d0	    !! Data writing for polar cells     
             end do
           end do
 	  		
 	  do i=1,ellipse_bead_num
-		write(18,*)j1, i, xe(i), ye(i)
+		write(18,*)j1, i, xe(i), ye(i)  !! Fixed outer elliptic boundary
 	  end do
 
         end if
 	end if
-
-       !if(j1.eq.jf) then
-
-         ! do l=1,mn 
-          !  do i=1,nn        
-            	   ! write(16,*)j1-10000,l,i,xn(l,i),yn(l,i)	              
-           ! end do
-          !end do
-          !do l=1,mb 
-           ! do i=1,nb        
-            	   ! write(16,*)j1-10000,l,i,xb(l,i),yb(l,i)	              
-            !end do
-          !end do
-          !do l=1,mp 
-           ! do i=1,np        
-            	   ! write(16,*)j1-10000,l,i,xp(l,i),yp(l,i)	              
-            !end do
-          !end do
-	!end if
 
 	end do
 
@@ -177,9 +159,10 @@
 	write(*,*)'time=',tf-ti
 
 end program main
+!!! Main program ends here !!!
 
 
-subroutine initial
+subroutine initial  !! Subroutine for creating initial tissue configuration !!
 
 use parameters
 use radii
@@ -190,14 +173,8 @@ double precision:: theta,dx,dy,x_tmp,y_tmp,xc_n(10),yc_n(10),xc_b,yc_b,xc_p,yc_p
 integer:: l,k,i,t,d,p,s, idum
 double precision:: ran2
 
-!open(12,file='nurse_cells_quasirndm.dat',status='unknown',position='append')
-!open(13,file='border_cells_quasirndm.dat',status='unknown',position='append')
-!open(14,file='polar_cells_quasirndm.dat',status='unknown',position='append')
-!open(15,file='ellipse.dat',status='unknown')
-
-!call srand (742775)
 CALL SYSTEM_CLOCK(COUNT=idum)
-   !! Nurse cells arrangement
+   !! Nurse cells arrangement !!
 	s=0
 	t=0
 	do l=1,mn/2
@@ -281,7 +258,7 @@ CALL SYSTEM_CLOCK(COUNT=idum)
 
 
 
-  !! Border cells arrangement
+  !! Border cells arrangement !!
 	theta_bcell_centre = 2*pi/6
 	do l=1,mb
 	           xc_b = (2*rp + rb + 0.1d0)*cos(theta_bcell_centre) + rb_cluster
@@ -297,7 +274,7 @@ CALL SYSTEM_CLOCK(COUNT=idum)
 		   theta_bcell_centre = theta_bcell_centre + 2*pi/6.0d0
 	end do
 
-  !! Polar cells arrangement
+  !! Polar cells arrangement !!
 
 	do l=1,mp
 		yc_p = 0.0d0
@@ -313,8 +290,8 @@ CALL SYSTEM_CLOCK(COUNT=idum)
 		   end do
 	end do
 
-  !! The beads for the boundary ellipse upto oocyte boundary
-            theta = 0.0d0
+  !! The beads for the boundary ellipse up to the oocyte boundary !!
+        theta = 0.0d0
 	    ellipse_bead_num = 0
 	    do i=1,full_ellipse_num
 	       x_tmp = (a/2.0d0)*(1+cos(theta)) 
@@ -322,9 +299,9 @@ CALL SYSTEM_CLOCK(COUNT=idum)
 	       theta = theta + 2.0d0*pi/full_ellipse_num    
 	       if (x_tmp.le.(0.75d0*a)) then
 	          ellipse_bead_num = ellipse_bead_num + 1
-		  xe(ellipse_bead_num) = x_tmp
-		  ye(ellipse_bead_num) = y_tmp 
-               end if  
+		  	  xe(ellipse_bead_num) = x_tmp
+		      ye(ellipse_bead_num) = y_tmp 
+           end if  
 	       !write(15,*)i,xe(i),ye(i)
 	    end do
  
@@ -340,10 +317,10 @@ end
 	use radii        
 	use arrays
 	use forces
-        use parameters
-        implicit none
-        integer:: i,j,j1,l,q
-        double precision:: r,factor,frepx,frepy,dx,dy,fadhx,fadhy,rlist,ti,tf
+    use parameters
+    implicit none
+    integer:: i,j,j1,l,q
+    double precision:: r,factor,frepx,frepy,dx,dy,fadhx,fadhy,rlist,ti,tf
 	double precision:: cm_d,cm_dx,cm_dy,overlap
 	integer:: icell,jcell,jcell0,nabor 
 	logical:: same_ring_beyond_nrexcl
@@ -363,12 +340,12 @@ end
 	!!#### friction force related parameter ####!!
 
 	
-        f_intx_b=0.0d0
-        f_inty_b=0.0d0
-        f_intx_n=0.0d0
-        f_inty_n=0.0d0
-        f_intx_p=0.0d0
-        f_inty_p=0.0d0
+    f_intx_b=0.0d0
+    f_inty_b=0.0d0
+    f_intx_n=0.0d0
+    f_inty_n=0.0d0
+    f_intx_p=0.0d0
+    f_inty_p=0.0d0
 	f_intx_e=0.0d0
 	f_inty_e=0.0d0
 
@@ -383,7 +360,7 @@ end
 
 	this_border_gets_mig_force(:,:) = .true.     
         
-       		 !! Nurse-Nurse !!
+       		 !! Nurse-Nurse interactions!!
 
 					do l=1,mn
 					    do i=1,nn
@@ -398,9 +375,9 @@ end
 							dy = yn(q,j)-yn(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 						
-                      					if(r.lt.rc_rep_nn) then
+                      		if(r.lt.rc_rep_nn) then
 
-				          			frepx = -k_rep_nn*(rc_rep_nn-r)*(dx)/r
+				          		frepx = -k_rep_nn*(rc_rep_nn-r)*(dx)/r
 					  			frepy = -k_rep_nn*(rc_rep_nn-r)*(dy)/r
 
 								cm_dx = cmx_n(q) - cmx_n(l)
@@ -417,7 +394,7 @@ end
 						                factor = -k_rep_nn*rc_rep_nn/cm_d
 						                frepx = frepx + factor*cm_dx
 						                frepy = frepy + factor*cm_dy
- 	                  				      end if
+ 	                  				end if
 
 				          			f_intx_n(l,i) = f_intx_n(l,i) + frepx 
 				          			f_intx_n(q,j) = f_intx_n(q,j) - frepx
@@ -425,7 +402,7 @@ end
 				          			f_inty_n(l,i) = f_inty_n(l,i) + frepy 
 				          			f_inty_n(q,j) = f_inty_n(q,j) - frepy
 
-                        				else if((r.le.rc_adh_nn).and.(r.ge.rc_rep_nn)) then
+                        		else if((r.le.rc_adh_nn).and.(r.ge.rc_rep_nn)) then
 							     if(l.ne.q) then
 
 								fadhx = k_adh_nn*(rc_adh_nn-r)*(dx)/r
@@ -434,7 +411,7 @@ end
 								f_intx_n(l,i) = f_intx_n(l,i) + fadhx
 								f_intx_n(q,j) = f_intx_n(q,j) - fadhx
 
-						                f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
+						        f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
 								f_inty_n(q,j) = f_inty_n(q,j) - fadhy
 
 							      end if
@@ -445,7 +422,7 @@ end
 					    end do
 					end do
 
-       		 !! Polar-Polar !!
+       		 !! Polar-Polar interactions!!
 
 					do l=1,mp
 					    do i=1,np
@@ -460,9 +437,9 @@ end
 							dy = yp(q,j)-yp(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_pp) then
+                      		if(r.lt.rc_rep_pp) then
 
-				          			frepx = -k_rep_pp*(rc_rep_pp-r)*(dx)/r
+				          		frepx = -k_rep_pp*(rc_rep_pp-r)*(dx)/r
 					  			frepy = -k_rep_pp*(rc_rep_pp-r)*(dy)/r
 
 								cm_dx = cmx_p(q) - cmx_p(l)
@@ -479,7 +456,7 @@ end
 						                factor = -k_rep_pp*rc_rep_pp/cm_d
 						                frepx = frepx + factor*cm_dx
 						                frepy = frepy + factor*cm_dy
- 	                  				      end if
+ 	                  			  end if
 
 				          			f_intx_p(l,i) = f_intx_p(l,i) + frepx
 				          			f_intx_p(q,j) = f_intx_p(q,j) - frepx
@@ -488,7 +465,7 @@ end
 				          			f_inty_p(q,j) = f_inty_p(q,j) - frepy
 
 
-                        				else if((r.le.rc_adh_pp).and.(r.ge.rc_rep_pp)) then
+                        		else if((r.le.rc_adh_pp).and.(r.ge.rc_rep_pp)) then
 							     if(l.ne.q) then
 
 								fadhx = k_adh_pp*(rc_adh_pp-r)*(dx)/r
@@ -497,7 +474,7 @@ end
 								f_intx_p(l,i) = f_intx_p(l,i) + fadhx
 								f_intx_p(q,j) = f_intx_p(q,j) - fadhx
 
-						                f_inty_p(l,i) = f_inty_p(l,i) + fadhy 
+						        f_inty_p(l,i) = f_inty_p(l,i) + fadhy 
 								f_inty_p(q,j) = f_inty_p(q,j) - fadhy
 
 							      end if
@@ -509,7 +486,7 @@ end
 					end do
 		
 
-       		 !! Border-Border !!
+       		 !! Border-Border interactions!!
 
 					do l=1,mb
 					    do i=1,nb
@@ -525,12 +502,12 @@ end
 							dy = yb(q,j)-yb(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_bb) then
+                      		if(r.lt.rc_rep_bb) then
 
 								this_border_gets_mig_force(q,j) = .false.
 								this_border_gets_mig_force(l,i) = .false.
 
-				          			frepx = -k_rep_bb*(rc_rep_bb-r)*(dx)/r
+				          		frepx = -k_rep_bb*(rc_rep_bb-r)*(dx)/r
 					  			frepy = -k_rep_bb*(rc_rep_bb-r)*(dy)/r
 
 								cm_dx = cmx_b(q) - cmx_b(l)
@@ -547,7 +524,7 @@ end
 						                factor = -k_rep_bb*rc_rep_bb/cm_d
 						                frepx = frepx + factor*cm_dx
 						                frepy = frepy + factor*cm_dy
- 	                  				      end if
+ 	                  			  end if
 
 				          			f_intx_b(l,i) = f_intx_b(l,i) + frepx 
 				          			f_intx_b(q,j) = f_intx_b(q,j) - frepx
@@ -556,19 +533,19 @@ end
 				          			f_inty_b(q,j) = f_inty_b(q,j) - frepy
 
 
-                        				else if((r.le.rc_adh_bb).and.(r.ge.rc_rep_bb)) then
+                        		else if((r.le.rc_adh_bb).and.(r.ge.rc_rep_bb)) then
 
 								this_border_gets_mig_force(q,j) = .false.
 								this_border_gets_mig_force(l,i) = .false.
 
-							     if(l.ne.q) then
+							    if(l.ne.q) then
 								fadhx = k_adh_bb*(rc_adh_bb-r)*(dx)/r
 								fadhy = k_adh_bb*(rc_adh_bb-r)*(dy)/r
 
 								f_intx_b(l,i) = f_intx_b(l,i) + fadhx
 								f_intx_b(q,j) = f_intx_b(q,j) - fadhx
 
-						                f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
+						        f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
 								f_inty_b(q,j) = f_inty_b(q,j) - fadhy
 
 							      end if
@@ -579,7 +556,7 @@ end
 					    end do
 					end do
 
-       		 !! Border-Polar !!
+       		 !! Border-Polar interactions!!
 
 					do l=1,mb
 					    do i=1,nb					    
@@ -590,11 +567,11 @@ end
 							dy = yp(q,j)-yb(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_bp) then
+                      		   if(r.lt.rc_rep_bp) then
 
 								this_border_gets_mig_force(l,i) = .false.
 
-				          			frepx = -k_rep_bp*(rc_rep_bp-r)*(dx)/r
+				          		frepx = -k_rep_bp*(rc_rep_bp-r)*(dx)/r
 					  			frepy = -k_rep_bp*(rc_rep_bp-r)*(dy)/r
 
 								cm_dx = cmx_p(q) - cmx_b(l)
@@ -611,7 +588,7 @@ end
 						                factor = -k_rep_bp*rc_rep_bp/cm_d
 						                frepx = frepx + factor*cm_dx
 						                frepy = frepy + factor*cm_dy
- 	                  				      end if
+ 	                  			  end if
 
 				          			f_intx_b(l,i) = f_intx_b(l,i) + frepx 
 				          			f_intx_p(q,j) = f_intx_p(q,j) - frepx
@@ -620,7 +597,7 @@ end
 				          			f_inty_p(q,j) = f_inty_p(q,j) - frepy
 
 						!!!!!********************************************************!!!!!
-						!!! Traction-like friction force betwn border-polar depending on &
+						!!! Traction-like friction force between border-polar depending on &
 						!!! & their relative velocity in the closest _|_ dir. of &
 						!!! & interaction vector. (SoftMat 2014, Karttunen, eq.6)
 
@@ -659,7 +636,7 @@ end
 
 								end if
 						!!!!!********************************************************!!!!!
-                        				else if((r.le.rc_adh_bp).and.(r.ge.rc_rep_bp)) then
+                        		else if((r.le.rc_adh_bp).and.(r.ge.rc_rep_bp)) then
 
 								this_border_gets_mig_force(l,i) = .false.
 
@@ -669,7 +646,7 @@ end
 								f_intx_b(l,i) = f_intx_b(l,i) + fadhx
 								f_intx_p(q,j) = f_intx_p(q,j) - fadhx
 
-						                f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
+						        f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
 								f_inty_p(q,j) = f_inty_p(q,j) - fadhy
 						!!!!!********************************************************!!!!!
 						!!! Traction-like friction force betwn border-polar depending on &
@@ -718,7 +695,7 @@ end
 						 end do
 					       end do
 
-       		 !! Nurse-Border !!
+       		 !! Nurse-Border interactions!!
 					
 					do l=1,mn
 					    do i=1,nn					    
@@ -729,11 +706,11 @@ end
 							dy = yb(q,j)-yn(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_nb) then
+                      			if(r.lt.rc_rep_nb) then
 
 								this_border_gets_mig_force(q,j) = .true.
 								
-				          			frepx = -k_rep_nb*(rc_rep_nb-r)*(dx)/r
+				          		frepx = -k_rep_nb*(rc_rep_nb-r)*(dx)/r
 					  			frepy = -k_rep_nb*(rc_rep_nb-r)*(dy)/r
 
 								cm_dx = cmx_b(q) - cmx_n(l)
@@ -750,7 +727,7 @@ end
 						                factor = -k_rep_nb*rc_rep_nb/cm_d
 						                frepx = frepx + factor*cm_dx
 						                frepy = frepy + factor*cm_dy
- 	                  				      end if
+ 	                  			  end if
 
 				          			f_intx_n(l,i) = f_intx_n(l,i) + frepx 
 				          			f_intx_b(q,j) = f_intx_b(q,j) - frepx
@@ -799,7 +776,7 @@ end
 								end if
 						!!!!!********************************************************!!!!!
 
-                        				else if((r.le.rc_adh_nb).and.(r.ge.rc_rep_nb)) then
+                        		else if((r.le.rc_adh_nb).and.(r.ge.rc_rep_nb)) then
 							
 								this_border_gets_mig_force(q,j) = .true.
 
@@ -809,7 +786,7 @@ end
 								f_intx_n(l,i) = f_intx_n(l,i) + fadhx
 								f_intx_b(q,j) = f_intx_b(q,j) - fadhx
 
-						                f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
+						        f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
 								f_inty_b(q,j) = f_inty_b(q,j) - fadhy
 						!!!!!********************************************************!!!!!
 						!!! Traction-like friction force betwn border-polar depending on &
@@ -859,7 +836,7 @@ end
 					       end do		
 
 
-       		 !! Nurse-Ellipse !!
+       		 !! Nurse - Outer-ellipse interactions!!
 					
 					do l=1,mn
 					    do i=1,nn					    
@@ -869,9 +846,9 @@ end
 							dy = ye(j)-yn(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_ne) then
+                      			if(r.lt.rc_rep_ne) then
 								
-				          			frepx = -k_rep_ne*(rc_rep_ne-r)*(dx)/r
+				          		frepx = -k_rep_ne*(rc_rep_ne-r)*(dx)/r
 					  			frepy = -k_rep_ne*(rc_rep_ne-r)*(dy)/r
 
 				          			f_intx_n(l,i) = f_intx_n(l,i) + frepx 
@@ -921,7 +898,7 @@ end
 								end if
 						!!!!!********************************************************!!!!!
 
-                        				else if((r.le.rc_adh_ne).and.(r.ge.rc_rep_ne)) then
+                        		else if((r.le.rc_adh_ne).and.(r.ge.rc_rep_ne)) then
 
 								fadhx = k_adh_ne*(rc_adh_ne-r)*(dx)/r
 								fadhy = k_adh_ne*(rc_adh_ne-r)*(dy)/r
@@ -929,7 +906,7 @@ end
 								f_intx_n(l,i) = f_intx_n(l,i) + fadhx
 								f_intx_e(j)   = f_intx_e(j) - fadhx
 
-						                f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
+						        f_inty_n(l,i) = f_inty_n(l,i) + fadhy 
 								f_inty_e(j)   = f_inty_e(j) - fadhy
 						!!!!!********************************************************!!!!!
 						!!! Traction-like friction force betwn border-polar depending on &
@@ -975,10 +952,10 @@ end
        							end if
 						    end do
 						 end do
-					       end do		
+					    end do		
 
 
-       		 !! Border-Ellipse !!
+       		 !! Border - Outer-ellipse interactions!!
 					
 					do l=1,mb
 					    do i=1,nb					    
@@ -988,9 +965,9 @@ end
 							dy = ye(j)-yb(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_be) then
+                      		if(r.lt.rc_rep_be) then
 								
-				          			frepx = -k_rep_be*(rc_rep_be-r)*(dx)/r
+				          		frepx = -k_rep_be*(rc_rep_be-r)*(dx)/r
 					  			frepy = -k_rep_be*(rc_rep_be-r)*(dy)/r
 
 				          			f_intx_b(l,i) = f_intx_b(l,i) + frepx 
@@ -1040,7 +1017,7 @@ end
 								end if
 						!!!!!********************************************************!!!!!
 
-                        				else if((r.le.rc_adh_be).and.(r.ge.rc_rep_be)) then
+                        		else if((r.le.rc_adh_be).and.(r.ge.rc_rep_be)) then
 							
 								!this_border_gets_mig_force(q,j) = .true.
 
@@ -1050,7 +1027,7 @@ end
 								f_intx_b(l,i) = f_intx_b(l,i) + fadhx
 								f_intx_e(j)   = f_intx_e(j) - fadhx
 
-						                f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
+						        f_inty_b(l,i) = f_inty_b(l,i) + fadhy 
 								f_inty_e(j)   = f_inty_e(j) - fadhy
 						!!!!!********************************************************!!!!!
 						!!! Traction-like friction force betwn border-polar depending on &
@@ -1096,10 +1073,10 @@ end
        							end if
 						    end do
 						 end do
-					       end do		
+					    end do		
 
 
-       		 !! Polar-Ellipse !!
+       		 !! Polar - Outer-ellipse interactions!!
 					
 					do l=1,mp
 					    do i=1,np					    
@@ -1109,9 +1086,9 @@ end
 							dy = ye(j)-yp(l,i)
 							r = dsqrt(dx*dx + dy*dy)
 
-                      					if(r.lt.rc_rep_pe) then
+                      			if(r.lt.rc_rep_pe) then
 								
-				          			frepx = -k_rep_pe*(rc_rep_pe-r)*(dx)/r
+				          		frepx = -k_rep_pe*(rc_rep_pe-r)*(dx)/r
 					  			frepy = -k_rep_pe*(rc_rep_pe-r)*(dy)/r
 
 				          			f_intx_p(l,i) = f_intx_p(l,i) + frepx 
@@ -1161,7 +1138,7 @@ end
 								end if
 						!!!!!********************************************************!!!!!
 
-                        				else if((r.le.rc_adh_pe).and.(r.ge.rc_rep_pe)) then
+                        		else if((r.le.rc_adh_pe).and.(r.ge.rc_rep_pe)) then
 							
 								!this_border_gets_mig_force(q,j) = .true.
 
@@ -1171,7 +1148,7 @@ end
 								f_intx_p(l,i) = f_intx_p(l,i) + fadhx
 								f_intx_e(j)   = f_intx_e(j) - fadhx
 
-						                f_inty_p(l,i) = f_inty_p(l,i) + fadhy 
+						        f_inty_p(l,i) = f_inty_p(l,i) + fadhy 
 								f_inty_e(j)   = f_inty_e(j) - fadhy
 						!!!!!********************************************************!!!!!
 						!!! Traction-like friction force betwn border-polar depending on &
@@ -1217,22 +1194,21 @@ end
        							end if
 						    end do
 						 end do
-					       end do		
+					    end do		
 
-
-					
+				
 	return
         end                
               
 
 
 
-       subroutine force(j1)
+       subroutine force(j1)  !! Subroutine for calculating the body-force (intracellular force) for each of the border, polar and nurse cells
 
-	use radii        
-	use arrays
-	use forces
-	use parameters
+		use radii        
+		use arrays
+		use forces
+		use parameters
         implicit none
         integer:: i,j,l,j1
         double precision:: l1,l2,dx1,dx2,dy1,dy2
@@ -1260,7 +1236,7 @@ end
           yp(l,np+1) = yp(l,1)
         end do
          
-             
+      !! For Nurse cells !!       
   	  do l=1,mn             ! loop for cell no.
               do i=1,nn         ! loop for beads in each cell
 
@@ -1285,7 +1261,8 @@ end
 	       cmy_n(l) = sum(yn(l,1:nn))/nn
 	  end do
 
-  	  do l=1,mb             ! loop for cell no.
+  	  !! For Border cells !!  
+	  do l=1,mb             ! loop for cell no.
               do i=1,nb         ! loop for beads in each cell
 
                    dx1 = xb(l,i-1)-xb(l,i)
@@ -1312,7 +1289,8 @@ end
 	       cmy_b(l) = sum(yb(l,1:nb))/nb
 	  end do
 
-  	  do l=1,mp             ! loop for cell no.
+  	 !! For Polar cells !!  
+	  do l=1,mp             ! loop for cell no.
               do i=1,np         ! loop for beads in each cell
 
                    dx1 = xp(l,i-1)-xp(l,i)
@@ -1359,10 +1337,10 @@ end
 
 
 
-       subroutine move_deterministic(dt)
-	use radii        
-	use arrays
-	use forces
+       subroutine move_deterministic(dt)  !! Subroutine for coordinate updatation of the beads, when no active migration force is there
+		use radii        
+		use arrays
+		use forces
        implicit none
        integer:: i,j,l,idum,j1
        double precision:: c,dt  
@@ -1457,11 +1435,11 @@ end
       end
 
 
-       subroutine move_noise(j1,dt)
-	use radii        
-	use arrays
-	use forces
-	use parameters
+       subroutine move_noise(j1,dt)  !! Subroutine for coordinate updatation of the beads, when active migration force is present
+		use radii        
+		use arrays
+		use forces
+		use parameters
        implicit none
        integer:: i,j,l,idum
        double precision:: ran2
@@ -1482,7 +1460,7 @@ end
 	g = 4.00d0  
 	epsilon_x = 1.00d0
 	epsilon_y = 1.000d0
-        force_coeff_x = 1.0d0
+    force_coeff_x = 1.0d0
 	force_coeff_y = 1.0d0 !0.01d0
 	x_sat = 0.375d0*a 		
       
@@ -1701,9 +1679,9 @@ end
       end
 
 
-       subroutine initial_angle           !! Subroutine for initializaion of noise-angle	
-	use radii        
-	use arrays
+       subroutine initial_angle           !! Subroutine for initialization of noise-angle	
+		use radii        
+		use arrays
         implicit none
         double precision :: ran2
         integer :: idum,i,l
